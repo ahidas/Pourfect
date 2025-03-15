@@ -29,7 +29,6 @@ int Liquid = 1;
 int PourLevel =  0;
 int main(void) {
     BOARD_Init();
-    BNO055_Init();
     TIMER_Init();
     CAPTOUCH_Init();
     OledInit();
