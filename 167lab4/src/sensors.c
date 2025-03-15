@@ -34,15 +34,19 @@ int SENSORS_getCupHeight(void){
             break;
         }
     }
+    printf("height: %d\n", height);
     return height;  // Example: just return the data as height
 }
 
-#define PING_DEFAULT_DISTANCE 10  // Default distance for water height calculation
+#define PING_DEFAULT_DISTANCE 25  // Default distance for water height calculation
 int SENSORS_getWaterHeight(void) {
     int distance = PING_GetDistance();
     //need to calibrate maybe
+    //printf("distance: %d\n", distance);  // Print distance for debugging
     int height = PING_DEFAULT_DISTANCE - distance;  // Example calculation
     return height;  // Example: just return the data as height
+
+    //red brown yellow abc
 }
 
 
@@ -60,11 +64,14 @@ int SENSORS_getWaterLevel(void) {
 }
 
 int SENSORS_checkWaterLevel(void){
-    return SENSORS_getWaterLevel() < 2 ? 0 : 1;  // Check if water level is below threshold
+    return 1;  // Placeholder for water level check logic
+    //return SENSORS_getWaterLevel() < 2 ? 0 : 1;  // Check if water level is below threshold
 }
 
 #define Z_THRESH 100
 int SENSORS_checkLevel(){
     int zAccel = BNO055_ReadAccelZ();
+   // printf("Z acceleration: %d\n", zAccel);  // Print Z acceleration for debugging
+   return 1;  // Placeholder for level check logic
     return (zAccel < 1000 + Z_THRESH && zAccel > 1000 - Z_THRESH) ? 1 : 0;  // Check if Z acceleration is below threshold
 }

@@ -357,8 +357,8 @@ void setColorWhite(){setRGB(255, 255, 255);}
 
 void send(uint8_t reg_addr, uint8_t data)
 {
-    printf("in send\n");
-    printf("data %x %x\n",reg_addr,data);
+    // printf("in send\n");
+    // printf("data %x %x\n",reg_addr,data);
     I2C_WriteRegDFRobot(_lcdAddr, reg_addr, data);
     // ESP_ERROR_CHECK(i2c_master_write_to_device(_i2cPort, _lcdAddr >> 1, data, len, 1000/ portTICK_PERIOD_MS));
    // ESP_ERROR_CHECK(i2c_master_transmit(_dev_handle, data, len, 10000));

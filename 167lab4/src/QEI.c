@@ -111,9 +111,15 @@ typedef enum { //enum for channel values of A and B
     if(count == 4){
         count = 0;
         count_out++;
+        if(count_out > 40){
+            count_out = 40; //prevent count_out from going over 40
+        }
     } else if( count == -4){
         count = 0;
         count_out--;
+        if(count_out < 0){ //prevent count_out from going negative
+            count_out = 0;
+        }
     }
  }
 
