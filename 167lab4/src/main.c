@@ -26,13 +26,13 @@ typedef enum {
 void startPump(){
     // Start the pump
     printf("Starting pump...\r\n");
-    PWM_SetDutyCycle(PWM_4, 100);
+   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, GPIO_PIN_SET);  //set the pin high
 }
 
 void stopPump(){
     // Stop the pump
     printf("Stopping pump...\r\n");
-    PWM_SetDutyCycle(PWM_4, 0);
+    HAL_GPIO_WritePin(GPIOC,GPIO_PIN_7, GPIO_PIN_RESET);  //set the pin high
 }
 
 int checks(){
@@ -71,35 +71,39 @@ int main(void) {
     DFRobot_Init();
     PWM_Init();
 
+    GPIO_InitTypeDef GPIO_InitStruct = {0};
+    GPIO_InitStruct.Pin = GPIO_PIN_7;
+    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+    HAL_GPIO_WritePin(GPIOC,GPIO_PIN_7, GPIO_PIN_RESET);  //set the pin high
+
     uint8_t buttons = 0;
     int pour_amount = 0;
     char buffer[32];  // Buffer to hold the formatted string
     while(1){
         switch(Current_state){
             case Level_check:
-                if(!checks()){
-                    HAL_Delay(100);
-                    continue;
-                }
 
                 HAL_Delay(1000);
                 setCursor(0, 0);
                 sprintf(buffer, "Water Level: %d%%", SENSORS_getWaterLevel() * 10);
                 printstr(buffer);
                 if(!SENSORS_cupPresent()){
-                    setCursor(0, 1);
+                    setCursor(0, 0);
                     printstr("No cup present level check");
                     HAL_Delay(1000);
                     continue;
                 }
                 if(!SENSORS_checkWaterLevel()){
-                    setCursor(0, 1);
+                    setCursor(0, 0);
                     printstr("Water level low");
                     HAL_Delay(1000);
                     continue;
                 }
                 if(!SENSORS_checkLevel()){
-                    setCursor(0, 1);
+                    setCursor(0, 0);
                     printstr("Level is uneven");
                     HAL_Delay(1000);
                     continue;
@@ -166,9 +170,9 @@ int main(void) {
             if(Pour_type == Auto_pour){
                 printf("pouring automatically\r\n");
                 startPump();
-                while(SENSORS_getWaterHeight() < SENSORS_getCupHeight()){
+                while(SENSORS_getWaterHeight() < SENSORS_getCupHeight() * 4){
                     //pour
-                    printf("water height: %d cup height: %d\r\n", SENSORS_getWaterHeight(), SENSORS_getCupHeight());
+                    //printf("water height: %d cup height: %d\r\n", SENSORS_getWaterHeight(), SENSORS_getCupHeight());
                     printf("pouring auto...\r\n");
 
                     if(!checks()){
@@ -188,10 +192,11 @@ int main(void) {
                     if(!checks()){
                         break;
                     }
+                    HAL_Delay(200);
                 }
             }
             stopPump();
-            printf("water height: %d cup height: %d\r\n", SENSORS_getWaterHeight(), SENSORS_getCupHeight());
+          //  printf("water height: %d cup height: %d\r\n", SENSORS_getWaterHeight(), SENSORS_getCupHeight());
             Current_state = Done_Pour;
             break;
 
