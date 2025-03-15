@@ -113,11 +113,11 @@ void clear()
     //vTaskDelay(pdMS_TO_TICKS(2));     // Delay for 2000 microseconds (2 milliseconds)
 }
 
-// void DFRobot_RGBLCD1602::home()
-// {
-//     command(LCD_RETURNHOME);          // Set cursor position to zero
-//     vTaskDelay(pdMS_TO_TICKS(2));     // Delay for 2000 microseconds (2 milliseconds)
-// }
+void home()
+{
+    command(LCD_RETURNHOME);          // Set cursor position to zero
+    DelayMsDFR(2);    // Delay for 2000 microseconds (2 milliseconds)
+}
 // void DFRobot_RGBLCD1602::noDisplay()
 // {
 //     _showControl &= ~LCD_DISPLAYON;
@@ -201,15 +201,15 @@ void autoscroll(void)
 //     send(data, 9);
 // }
 
-// void DFRobot_RGBLCD1602::setCursor(uint8_t col, uint8_t row)
-// {
+void setCursor(uint8_t col, uint8_t row)
+{
 
-//     col = (row == 0 ? col|0x80 : col|0xc0);
-//     uint8_t data[3] = {0x80, col};
+    col = (row == 0 ? col|0x80 : col|0xc0);
+    uint8_t data[3] = {0x80, col};
 
-//     send(data, 2);
+    send(0x80, col);
 
-// }
+}
 
 void setRGB(uint8_t r, uint8_t g, uint8_t b)
 {
@@ -395,8 +395,12 @@ void setReg(uint8_t addr, uint8_t data)
 
 
 void printstr(const char* string){
+ //   if(strlen(string) > _cols){
+ //   }
         for(int i = 0; i < strlen(string); i++){
             write((uint8_t) string[i]);
     }
 }
+
+
 

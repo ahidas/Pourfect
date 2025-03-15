@@ -6,7 +6,7 @@
 #include "sensors.h"
 #include "I2C.h"
 #include "DFRobot_RGBLCD1602.h"
-
+#include "uart.h"
 
 // void I2C_Scan()
 // {
@@ -38,24 +38,59 @@
 //     }
 // }
 
-
 int main(void) {
     BOARD_Init();
-    printf("inniting\n");
-    printf("inniting\n");
     TIMER_Init();
     I2C_Init();
-    BNO055_Init();
     DFRobot_Init();
    // clear();
     SENSORS_Init();
-    printstr("Hello, World!");
 
-    while(1) {
-        SENSORS_cupPresent();
+
+    unsigned char low_water_level[8];
+    const char* string = "Hello, World!";
+    int str_len = strlen(string);
+    printstr(string);
+    int scroll_index = 0;
+
+    while(1){
         printf("position: %d\n", SENSORS_getPosition());
-        printf("z_accel: %d\n", BNO055_ReadAccelZ());
-        HAL_Delay(1000);
+        printf("Is IMU level: %d\n", SENSORS_checkLevel());
+        printf("Water level: %d\n", SENSORS_getWaterLevel());
+        printf("IS water level enough?: %d\n", SENSORS_checkWaterLevel());
+        printf("Cup height: %d\n", SENSORS_getCupHeight());
+        printf("Is cup present?: %d\n", SENSORS_cupPresent());
+        HAL_Delay(5000);
     }
+
+
+//     while(1) {
+//  // Print received data to console
+//         if(scroll_index < str_len) {
+//             scrollDisplayLeft();
+//             scroll_index++;
+//         } else {
+//             scroll_index = 0;
+//             home();
+//             printstr(string);  // Reset the display
+//         }
+//         scrollDisplayLeft();
+//         SENSORS_cupPresent();
+//         printf("position: %d\n", SENSORS_getPosition());
+//         printf("z_accel: %d\n", BNO055_ReadAccelZ());
+//         for (int i = 0; i < 2; i++) {
+//             low_water_level[i] = I2C_ReadRegister(0x77, 0x00);  // Read each section
+//             if (low_water_level[0] == 0 && low_water_level[1] == 0){
+//                 printf("low liquid level detected\n");
+//                 // PWM_SetDutyCycle(PWM_4, 100);
+//             }else{
+//                 printf("liquid level suffcient\n");
+//                 // PWM_SetDutyCycle(PWM_4, 0);
+
+//             }
+//         }
+//         HAL_Delay(1000);
+
+//     }
     return 0;
 }
