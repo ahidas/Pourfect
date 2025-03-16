@@ -36,18 +36,26 @@ void stopPump(){
 }
 
 int checks(){
-    if(!SENSORS_checkLevel()){
-        printf("level is uneven\r\n");
-        return 0;
-    }
+   // printf("in checks\n");
+    // if(!SENSORS_checkLevel()){
+    //     printf("level is uneven\r\n");
+    //     clear();
+    //     printstr("Uneven level");
+    //     return 0;
+    // }
     if(!SENSORS_cupPresent()){
         printf("no cup present\r\n");
+        clear();
+        printstr("No cup");
         return 0;
     }
     if(!SENSORS_checkWaterLevel()){
         printf("water level is low\r\n");
+        clear();
+        printstr("Not enough water");
         return 0;
     }
+   // printf("done checks\n");
     return 1;
 }
 //start on level check 
@@ -85,30 +93,16 @@ int main(void) {
     while(1){
         switch(Current_state){
             case Level_check:
-
                 HAL_Delay(1000);
-                setCursor(0, 0);
-                sprintf(buffer, "Water Level: %d%%", SENSORS_getWaterLevel() * 10);
-                printstr(buffer);
-                if(!SENSORS_cupPresent()){
-                    setCursor(0, 0);
-                    printstr("No cup present level check");
-                    HAL_Delay(1000);
-                    continue;
-                }
-                if(!SENSORS_checkWaterLevel()){
-                    setCursor(0, 0);
-                    printstr("Water level low");
-                    HAL_Delay(1000);
-                    continue;
-                }
-                if(!SENSORS_checkLevel()){
-                    setCursor(0, 0);
-                    printstr("Level is uneven");
-                    HAL_Delay(1000);
+
+                if(!checks()){
+                    printf("here\n");
                     continue;
                 }
                 HAL_Delay(100);
+                setCursor(0, 0);
+                sprintf(buffer, "Water Level: %.0f%%", SENSORS_getWaterLevel() / 2.0 * 10);
+                clearPrint(buffer,0);
                 printf("moving to button\n");
                 Current_state = Button;
             break;
@@ -119,19 +113,18 @@ int main(void) {
                     Current_state = Level_check;
                     continue;
                 }
-                setCursor(0, 1);
-                printstr("                      ");
+                setCursor(0, 0);
+                sprintf(buffer, "Water Level: %.0f%%", SENSORS_getWaterLevel() / 2.0 * 10);
+                clearPrint(buffer,0);
+
                 sprintf(buffer, "Amount: %d ", pour_amount);
                 setCursor(0, 1);
-                printstr(buffer);
+                clearPrint(buffer,1);
                 buttons = buttons_state();
                 if((buttons & 0x1) == 0){
                     printf("press detected\r\n");
                     for(int i = 0; i <= 100; i++){
                         pour_amount = SENSORS_getPosition();
-                        setCursor(0, 1);
-                        sprintf(buffer, "Amount: %d", pour_amount);
-                        printstr(buffer);
                         buttons = buttons_state();
                         if((( buttons & 0x1) == 1) && (i >= 7)){
                             printf("Long press \r\n");
@@ -167,26 +160,40 @@ int main(void) {
 
             case Pour:
             printf("in pour state\r\n");
+            float last_percent = 0;
             if(Pour_type == Auto_pour){
                 printf("pouring automatically\r\n");
+                int getCupHeight = SENSORS_getCupHeight();
+                int water_height = 0;
                 startPump();
-                while(SENSORS_getWaterHeight() < SENSORS_getCupHeight() * 4){
-                    //pour
-                    //printf("water height: %d cup height: %d\r\n", SENSORS_getWaterHeight(), SENSORS_getCupHeight());
+                while(water_height < getCupHeight * 3.5){
+                    water_height = SENSORS_getWaterHeight();
+                    if(water_height <= 0){
+                        water_height = 1;
+                    }
                     printf("pouring auto...\r\n");
-
+                    float percent = 100.0 * water_height / (getCupHeight * 3.5);
+                    if (((percent > last_percent) && percent <= 100)  || last_percent == 0){
+                    sprintf(buffer, "%.0f%%",  percent);
+                    setCursor(0, 1);
+                    clearPrint(buffer,1);
+                    last_percent = percent;
+                    }
                     if(!checks()){
                         break;
                     }
-                    HAL_Delay(100);
+                    HAL_Delay(200);
                 }
+                printf("broke out\n");
             } else {
                 startPump();
                 printf("pouring manually: %d\r\n", pour_amount);
                 int count = 0;
                 while(count < pour_amount){
                     //pour
-
+                    sprintf(buffer, "Amount: %d ", pour_amount - count - 1);
+                    setCursor(0, 1);
+                    clearPrint(buffer,1);
                     printf("pouring man...\r\n");
                     count++;
                     if(!checks()){

@@ -110,6 +110,7 @@ void clear()
 {
     command(LCD_CLEARDISPLAY);        // Clear display, set cursor position to zero
     DelayMsDFR(2);     // Delay for 2000 microseconds (2 milliseconds)
+    setCursor(0,0);
     //vTaskDelay(pdMS_TO_TICKS(2));     // Delay for 2000 microseconds (2 milliseconds)
 }
 
@@ -229,7 +230,6 @@ void setRGB(uint8_t r, uint8_t g, uint8_t b)
       setReg(0x07, 0xFF);
     }
   }
-
 }
 
 // void DFRobot_RGBLCD1602::setColor(uint8_t color)
@@ -394,9 +394,27 @@ void setReg(uint8_t addr, uint8_t data)
 }
 
 
+
+void clearRow(row){
+    setCursor(0,row);
+    HAL_Delay(10);
+    for(int i = 0; i < _cols; i++){
+        write(' ');
+    }
+
+}
+
+
+void clearPrint(const char* string, int row){
+    clearRow(row);
+    HAL_Delay(10);
+    setCursor(0,row);
+    HAL_Delay(10);
+    printstr(string);
+    HAL_Delay(100);
+}
+
 void printstr(const char* string){
- //   if(strlen(string) > _cols){
- //   }
         for(int i = 0; i < strlen(string); i++){
             write((uint8_t) string[i]);
     }

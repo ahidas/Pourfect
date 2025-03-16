@@ -5,7 +5,7 @@ void SENSORS_Init(void) {
     PING_Init();
     QEI_Init();
     I2C_Init();  // Initialize I2C for communication with sensors
-    BNO055_Init();
+   // BNO055_Init();
     Uart1_Init(9600);
 }
 
@@ -21,32 +21,32 @@ int SENSORS_getPosition(void) {
 }
 
 uint8_t data[10] = {0};  // Buffer for UART data
-
+#define NO_CUP_THRESH 3
 int SENSORS_getCupHeight(void){
 
-    // while(flag != 0xAA){
-    //     Uart1_rx(&flag,1);
-    // }
-    if(Uart1_rx(&data, 10) == -1){
+    int No_cup_count = 0;
+    while(No_cup_count < NO_CUP_THRESH){
+    if(Uart1_rx(data, 10) == -1){
         printf("ERROR\n");
-    }  // Read data from UART
-    // while(flag != 0x55){
-    //     Uart1_rx(&flag,1);
-    // }
+    }  
     int height = 0;
-
    // printf("printing data\n");
     for(int i = 0; i < 10; i++){
-       // printf("data[%d]: %d\n", i, data[i]);  // Print received data for debugging
         if(!data[i]){
             height++;
         } else {
+            No_cup_count++;
             break;
         }
     }
+    if(height){
+        return height;
+    }
+}
+
 
     //printf("height: %d\n", height);
-    return height;  // Example: just return the data as height
+    return 0;  // Example: just return the data as height
 }
 
 #define PING_DEFAULT_DISTANCE 64  // Default distance for water height calculation
@@ -63,23 +63,25 @@ int SENSORS_getWaterHeight(void) {
 }
 
 
+
+
 int water_low = 0;
+unsigned char water_level_arr[20] = {0};
 int SENSORS_getWaterLevel(void) {
-        unsigned char low_water_level[8];
+        return 11;
         int waterLevel = 0;
         if(water_low){
             return 0;
         }
-        for (int i = 0; i < 2; i++) {
-            low_water_level[i] = I2C_ReadRegister(0x77, 0x00);  // Read each section
-            if (low_water_level[0] == 0 && low_water_level[1] == 0){
-                printf("low liquid level detected\n");
-                water_low = 1;
-                return 0;
-            }else{
-             //   printf("liquid level suffcient\n");
-                return 3;
+        for (int i = 0; i < 20; i++) { //read first 8 bytes
+            if(i <= 7){
+            water_level_arr[i] = I2C_ReadRegister(0x77, 0x77); 
             }
+            else {
+                water_level_arr[i] = I2C_ReadRegister(0x77, 0x78);
+            }
+            waterLevel += water_level_arr[i] != 0;
+           // printf("water level: %d\n", waterLevel);
         }
         // for (int i = 0; i < 8; i++) {
         //     low_water_level[i] = I2C_ReadRegister(0x77, 0x00);  // Read each section
@@ -91,9 +93,18 @@ int SENSORS_getWaterLevel(void) {
     return waterLevel;  // Return the calculated height
 }
 
+#define WATER_LOW_THRESH 1
+#define WATER_HIGH_THRESH 3
+int level_low = 1; //0 means water is low, 1 is water high
 int SENSORS_checkWaterLevel(void){
-    return 1;  // Placeholder for water level check logic
-    return SENSORS_getWaterLevel() < 2 ? 0 : 1;  // Check if water level is below threshold
+   // return 1;  // Placeholder for water level check logic
+    int water_height = SENSORS_getWaterLevel();
+    if(water_height < WATER_LOW_THRESH){
+        level_low = 0;
+    } else if( water_height > WATER_HIGH_THRESH){
+        level_low = 1;
+    }
+    return level_low;  // Check if water level is below threshold
 }
 
 #define Z_THRESH 100

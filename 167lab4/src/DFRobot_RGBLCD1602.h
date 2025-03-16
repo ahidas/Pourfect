@@ -263,7 +263,7 @@
    */
   void setBacklight(bool mode);
 
-
+  void clearPrint(const char* string, int row);
   void printstr(const char* string);
 
   /**
