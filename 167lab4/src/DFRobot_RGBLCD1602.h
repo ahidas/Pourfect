@@ -9,7 +9,8 @@
  * @url https://github.com/DFRobot/DFRobot_RGBLCD1602
  */
 
- //this library is being modified for use with the stm32
+
+ //This library is being modified for use with the stm32, originally intended for use with arduino you can find the original repo in the github link above.
 #ifndef __DFRobot_RGBLCD1602_H__
 #define __DFRobot_RGBLCD1602_H__
 
@@ -25,8 +26,7 @@
 
 #define RGB_ADDRESS (0x2D)
 #define LCD_ADDRESS     (0x3E)
-// #define I2C_MASTER_SCL_IO (gpio_num_t) 8     // GPIO pin number for SCL
-// #define I2C_MASTER_SDA_IO (gpio_num_t) 10     // GPIO pin number for SDA
+
 /*!
  *  @brief color define
  */ 
@@ -263,7 +263,24 @@
    */
   void setBacklight(bool mode);
 
+
+
+
+  /**
+   * @fn clearPrint
+   * @brief clears the row indicated by 'row' param and prints, This prevents artifacts from previous prints
+   * @param string string to be printed
+   * @param row row to be cleared and then printed on
+   */
   void clearPrint(const char* string, int row);
+
+
+
+  /**
+   * @fn printstr
+   * @brief prints str wherever current cursor is
+   * @param string string to be printed
+   */
   void printstr(const char* string);
 
   /**

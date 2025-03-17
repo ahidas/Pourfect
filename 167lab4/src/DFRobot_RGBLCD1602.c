@@ -42,17 +42,22 @@ const uint8_t color_define[4][3] =
     {0, 0, 255},                // blue
 };
 
-// /*******************************public*******************************/
+
+/*
+All This code is from the repo mentioned in the header file. It was converted from an arduino C++ library to be used with our STM
+The main changes are in the init function, send, command, and setReg.
+These were changed to use the writeReg function written specifically for the RGBLCD
+Some functions are commented out as they were not used
+*/
 
 void DFRobot_Init()
 {
     printf("Initializing driver\n");
     printf("Initializing timers\n");
     TIMER_Init(); // init timer module for delay functions
-    //HAL_Delay(5000);
     printf("Initializing I2C\n");
     I2C_Init();  // init I2C module
-    //Init();  // init I2C module
+
 
     uint8_t RGBAddr=RGB_ADDRESS, lcdCols=16, lcdRows=2,lcdAddr=LCD_ADDRESS;
 
@@ -60,12 +65,8 @@ void DFRobot_Init()
     _RGBAddr = RGBAddr;
     _cols = lcdCols;
     _rows = lcdRows;
-    // Initialize I2C 
-   // configure_i2c((uint16_t) LCD_ADDRESS, (uint32_t) 100000, &_dev_handle, &_bus_handle, _i2cPort);  // Call your I2C initialization function
-
 
 printf("Driver installed\n");
-printf("_RGBAddr: %x\n",_RGBAddr);
     if (_RGBAddr == 0x60) {
         REG_RED   = 0x04;
         REG_GREEN = 0x03;
@@ -206,7 +207,6 @@ void setCursor(uint8_t col, uint8_t row)
 {
 
     col = (row == 0 ? col|0x80 : col|0xc0);
-    uint8_t data[3] = {0x80, col};
 
     send(0x80, col);
 
@@ -250,19 +250,7 @@ int write(uint8_t value)
 inline void command(uint8_t value)
 {
     printf("sending command \n");
-   // uint8_t data_u, data_l;
-  //  data_u = value & 0xf0;
-  //  data_l = (value<<4) & 0xf0;
-// Allocate 2 bytes on the heap
     uint8_t reg_addr = 0x80;
-
-    
-    
-    // uint8_t* data = new uint8_t[4];  
-    // data[0] = data_u | 0x0D;
-    // data[1] = data_u | 0x09;
-    // data[2] = data_l | 0x0D;
-    // data[3] = data_l | 0x09;
     send(reg_addr, value);
 }
 
@@ -294,21 +282,14 @@ void begin(uint8_t rows)
 
     // Wait for power stabilization (at least 40ms after VCC > 2.7V)
     DelayMsDFR(100);
-    //vTaskDelay(50 / portTICK_PERIOD_MS);
-
-    // Send function set command sequence according to the HD44780 datasheet
-  //  HAL_Delay(5000);
     printf("sending first command\n");
     command(LCD_FUNCTIONSET | _showFunction);
-   // HAL_Delay(5000);
-    //vTaskDelay(5 / portTICK_PERIOD_MS);  // wait more than 4.1ms
     DelayMsDFR(5);
 
 
 
     // Second try
     command(LCD_FUNCTIONSET | _showFunction);
-    //vTaskDelay(5 / portTICK_PERIOD_MS);
     DelayMsDFR(5);
 
     // Third try
@@ -328,26 +309,9 @@ void begin(uint8_t rows)
     
     // RGB backlight initialization
 
-    // if (_RGBAddr == (0xc0)) {
-    //     // Backlight initialization
-    //     printf("1\n");
-        setReg(REG_MODE1, 0);
-        setReg(REG_OUTPUT, 0xFF);
-        setReg(REG_MODE2, 0x20);  // Set MODE2 values
-    // } else if (_RGBAddr == (0x60 >> 1)) {
-    //             printf("2\n");
-    //     setReg(0x01, 0x00);
-    //     setReg(0x02, 0xFF);
-    //     setReg(0x04, 0x15);
-    // } else if (_RGBAddr == 0x6B) {
-    //             printf("3\n");
-    //     setReg(0x2F, 0x00);
-    //     setReg(0x00, 0x20);
-    //     setReg(0x01, 0x00);
-    //     setReg(0x02, 0x01);
-    //     setReg(0x03, 4);
-    // } 
-    // printf("initialized registers\n");
+    setReg(REG_MODE1, 0);
+    setReg(REG_OUTPUT, 0xFF);
+    setReg(REG_MODE2, 0x20);  // Set MODE2 values
 
     // Set color to white
     setColorWhite();
@@ -357,45 +321,18 @@ void setColorWhite(){setRGB(255, 255, 255);}
 
 void send(uint8_t reg_addr, uint8_t data)
 {
-    // printf("in send\n");
-    // printf("data %x %x\n",reg_addr,data);
     I2C_WriteRegDFRobot(_lcdAddr, reg_addr, data);
-    // ESP_ERROR_CHECK(i2c_master_write_to_device(_i2cPort, _lcdAddr >> 1, data, len, 1000/ portTICK_PERIOD_MS));
-   // ESP_ERROR_CHECK(i2c_master_transmit(_dev_handle, data, len, 10000));
 
-   /*
-     i2c_cmd_handle_t cmd = i2c_cmd_link_create();
-    
-    // Start I2C communication
-    ESP_ERROR_CHECK(i2c_master_start(cmd));
-    
-    // Write the slave address with the write bit
-    ESP_ERROR_CHECK(i2c_master_write_byte(cmd, (_lcdAddr << 1) | I2C_MASTER_WRITE, true));
-    
-    // Write the data bytes
-    ESP_ERROR_CHECK(i2c_master_write(cmd, data, len, true));
-    
-    // Send a stop bit to end the transaction
-    ESP_ERROR_CHECK(i2c_master_stop(cmd));
-    
-    // Execute the command link
-    ESP_ERROR_CHECK(i2c_master_cmd_begin(_i2cPort, cmd, 1000 / portTICK_PERIOD_MS));
-    
-    // Delete the command link to free up resources
-    i2c_cmd_link_delete(cmd);
-*/
-               // stop transmitting
 }
 
 void setReg(uint8_t addr, uint8_t data)
 {
-    printf("setting register\n");
     I2C_WriteRegDFRobot(_RGBAddr, addr, data);
 }
 
 
-
-void clearRow(row){
+//Clears the row based on row, helper function for clearPrint
+void clearRow(int row){
     setCursor(0,row);
     HAL_Delay(10);
     for(int i = 0; i < _cols; i++){

@@ -5,13 +5,13 @@ volatile int count = 0;
 volatile int count_out = 0;
 
 void QEI_Init(void) {
-      //Configure GPIO pins : PB4 PB6 
+      //Configure GPIO pins : PB4 PA15
       GPIO_InitTypeDef GPIO_InitStruct = {0};
       GPIO_InitStruct.Pin = GPIO_PIN_4;
       GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
       GPIO_InitStruct.Pull = GPIO_NOPULL;
       HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-      GPIO_InitStruct.Pin = GPIO_PIN_15;
+      GPIO_InitStruct.Pin = GPIO_PIN_15; //Had to change this to be pin A15 for this project
         HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
       // EXTI interrupt init

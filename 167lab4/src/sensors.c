@@ -1,23 +1,21 @@
 #include "sensors.h"
 #include <stdio.h>
 void SENSORS_Init(void) {
-    CAPTOUCH_Init();
     PING_Init();
     QEI_Init();
     I2C_Init();  // Initialize I2C for communication with sensors
-   // BNO055_Init();
-    Uart1_Init(9600);
+    Uart1_Init(9600); //Initialize at 9600 baud rate to communicate with esp32
 }
 
 
 
 
 int SENSORS_cupPresent(void) {
-    return SENSORS_getCupHeight() ? 1 : 0;
+    return SENSORS_getCupHeight() ? 1 : 0; //As long as height is not zero there is a cup
 }
 
 int SENSORS_getPosition(void) {
-    return QEI_GetPosition();
+    return QEI_GetPosition(); 
 }
 
 uint8_t data[10] = {0};  // Buffer for UART data
@@ -25,41 +23,33 @@ uint8_t data[10] = {0};  // Buffer for UART data
 int SENSORS_getCupHeight(void){
 
     int No_cup_count = 0;
-    while(No_cup_count < NO_CUP_THRESH){
-    if(Uart1_rx(data, 10) == -1){
+    while(No_cup_count < NO_CUP_THRESH){ //keep track of no cup readings, have to have NO_CUP_THRESH readings of no cup in a row to confirm no cup, this is done to limit errors
+    if(Uart1_rx(data, 10) == -1){ //read data into buffer
         printf("ERROR\n");
     }  
     int height = 0;
-   // printf("printing data\n");
     for(int i = 0; i < 10; i++){
-        if(!data[i]){
+        if(!data[i]){ //A reading of 0 indicates a blocked LED, which indicates an obstruction
             height++;
-        } else {
-            No_cup_count++;
+        } else { //Otherwise a non zero reading indicates an unblocked LED, indicating no obstruction
+            No_cup_count++; 
             break;
         }
     }
-    if(height){
+    if(height){ 
         return height;
     }
 }
-
-
-    //printf("height: %d\n", height);
-    return 0;  // Example: just return the data as height
+    //if we get to this point then a 'no cup' reading was read NO_CUP_THRESH times, giving a good indication that there was no cup
+    return 0; 
 }
 
-#define PING_DEFAULT_DISTANCE 64  // Default distance for water height calculation
+#define PING_DEFAULT_DISTANCE 64  // Default distance for water height calculation, this is based on readings from slotted sensor position to bottom of empty cup
 int SENSORS_getWaterHeight(void) {
-    int distance = PING_GetDistance();
-    printf("PING distance: %d\n", distance);  // Print distance for debugging
-    //need to calibrate maybe
-    //printf("distance: %d\n", distance);  // Print distance for debugging
+    int distance = PING_GetDistance(); 
     int height = PING_DEFAULT_DISTANCE - distance;  // Example calculation
     HAL_Delay(100);  // Delay for stability
-    return height;  // Example: just return the data as height
-
-    //red brown yellow abc
+    return height;
 }
 
 
@@ -67,6 +57,8 @@ int SENSORS_getWaterHeight(void) {
 
 int water_low = 0;
 unsigned char water_level_arr[20] = {0};
+
+//The water level sensors we were using contain 20 pads, the first 8 pads can be read from the register at 0x77, the last 12 from the register at 0x78
 int SENSORS_getWaterLevel(void) {
         return 11;
         int waterLevel = 0;
@@ -77,40 +69,24 @@ int SENSORS_getWaterLevel(void) {
             if(i <= 7){
             water_level_arr[i] = I2C_ReadRegister(0x77, 0x77); 
             }
-            else {
+            else { //read last 12 bytes
                 water_level_arr[i] = I2C_ReadRegister(0x77, 0x78);
             }
             waterLevel += water_level_arr[i] != 0;
-           // printf("water level: %d\n", waterLevel);
         }
-        // for (int i = 0; i < 8; i++) {
-        //     low_water_level[i] = I2C_ReadRegister(0x77, 0x00);  // Read each section
-        //     if(low_water_level[i] == 1) {
-        //         waterLevel++;  // Increment water level if section is empty
-        //     } else break;
-        // }
-        // printf("water level: %d", )
     return waterLevel;  // Return the calculated height
 }
 
-#define WATER_LOW_THRESH 1
-#define WATER_HIGH_THRESH 3
+#define WATER_LOW_THRESH 2  //10 percent
+#define WATER_HIGH_THRESH 5 //25 percent
 int level_low = 1; //0 means water is low, 1 is water high
 int SENSORS_checkWaterLevel(void){
-   // return 1;  // Placeholder for water level check logic
-    int water_height = SENSORS_getWaterLevel();
+    int water_height = SENSORS_getWaterLevel(); //get water level
+    //compare water level with our thresholds
     if(water_height < WATER_LOW_THRESH){
         level_low = 0;
     } else if( water_height > WATER_HIGH_THRESH){
         level_low = 1;
     }
-    return level_low;  // Check if water level is below threshold
-}
-
-#define Z_THRESH 100
-int SENSORS_checkLevel(){
-    int zAccel = BNO055_ReadAccelZ();
-   // printf("Z acceleration: %d\n", zAccel);  // Print Z acceleration for debugging
-   return 1;  // Placeholder for level check logic
-    return (zAccel < 1000 + Z_THRESH && zAccel > 1000 - Z_THRESH) ? 1 : 0;  // Check if Z acceleration is below threshold
+    return level_low;
 }
