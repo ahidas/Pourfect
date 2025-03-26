@@ -11,6 +11,10 @@ The second mode is an automated pouring mode which pours to within an inch of th
 
 ## Contributors
 Adam Hidas
+
 Peter Le
+
 Max Mcgylnn
+
 James Huang
+
